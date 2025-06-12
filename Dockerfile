@@ -18,6 +18,7 @@ RUN apt-get update && apt install -y protobuf-compiler
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest \
  && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
+
 WORKDIR /go/src/work
 COPY go.mod go.sum ./
 RUN go mod download
@@ -29,7 +30,11 @@ RUN protoc --proto_path ./grpc/proto \
 
 RUN mkdir -p cert \
  && openssl req -x509 -nodes -newkey rsa:2048 -days 3650 -keyout cert/server-key.pem -out cert/server-cert.pem -subj "/CN=localhost"
-RUN CGO_ENABLED=0 GOARCH=$TARGETARCH go build -buildvcs=false -trimpath -ldflags '-w -s' -o /go/bin/gelbo
+
+# install Orchestrion for Datadog APM
+RUN go install github.com/DataDog/orchestrion@latest && orchestrion pin
+
+RUN CGO_ENABLED=0 GOARCH=$TARGETARCH orchestrion go build -buildvcs=false -trimpath -ldflags '-w -s' -o /go/bin/gelbo
 
 FROM alpine AS runner
 
