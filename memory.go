@@ -15,11 +15,13 @@ import (
 const memoryAllocTicker = 1000
 const memoryCheckInterval = 500
 
+//dd:span
 func memoryControl(memoryTargetChan chan float64) {
 	go procMeminfoParser()
 	go memoryAllocate(memoryTargetChan)
 }
 
+//dd:span
 func memoryAllocate(memoryTargetChan chan float64) {
 	memTotal, err := getMemoryTotal()
 	if err != nil {
@@ -51,6 +53,7 @@ func memoryAllocate(memoryTargetChan chan float64) {
 	}
 }
 
+//dd:span
 func getMemoryTotal() (int, error) {
 	file, err := os.Open("/proc/meminfo")
 	if err != nil {
@@ -78,11 +81,14 @@ func getMemoryTotal() (int, error) {
 }
 
 // Stats represents memory statistics for linux
+//
+//dd:span
 type Stats struct {
 	Total, Used, Buffers, Cached, Free, Available, Active, Inactive,
 	SwapTotal, SwapUsed, SwapCached, SwapFree float64
 }
 
+//dd:span
 func procMeminfoParser() {
 	t := time.NewTicker(time.Duration(memoryCheckInterval) * time.Millisecond)
 	defer t.Stop()
@@ -134,11 +140,13 @@ func procMeminfoParser() {
 	}
 }
 
+//dd:span
 func freeMemory(done chan int) {
 	close(done)
 	runtime.GC()
 }
 
+//dd:span
 func allocMemory(size int) string {
 	buf := new(bytes.Buffer)
 	str := "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%#"
