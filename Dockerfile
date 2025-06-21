@@ -38,6 +38,13 @@ RUN CGO_ENABLED=0 GOARCH=$TARGETARCH orchestrion go build -buildvcs=false -trimp
 
 FROM alpine AS runner
 
+ENV DD_SERVICE=gelbo \
+    DD_ENV=dev \
+    DD_VERSION=2.0 \
+    DD_TRACE_ENABLED=true \
+    DD_LOGS_INJECTION=true \
+    DD_RUNTIME_METRICS_ENABLED=true
+
 EXPOSE 80
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /go/bin/gelbo /app/gelbo
