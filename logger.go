@@ -6,11 +6,14 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"time"
 
 	pb "github.com/miyaz/gelbo/grpc/pb"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
+
+	ddtrace "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 type HttpLogger struct {
@@ -55,10 +58,9 @@ func setStatusForLogger(status int, r *http.Request) {
 	}
 }
 
-func (l *HttpLogger) log() {
+func (l *HttpLogger) log(r *http.Request) {
 	restime := time.Now()
-	// request logging
-	logger := zerolog.New(os.Stdout).With().
+	ctx := zerolog.New(os.Stdout).With().
 		Time("reqtime", l.reqtime).
 		Str("proto", l.proto).
 		Str("method", l.method).
@@ -72,8 +74,17 @@ func (l *HttpLogger) log() {
 		Int("status", l.status).
 		Time("time", restime).
 		Dur("duration", restime.Sub(l.reqtime)).
-		Int64("reuse", l.reuse).
-		Logger()
+		Int64("reuse", l.reuse)
+
+	if span, ok := ddtrace.SpanFromContext(r.Context()); ok {
+		traceID := strconv.FormatUint(span.Context().TraceID(), 10)
+		spanID := strconv.FormatUint(span.Context().SpanID(), 10)
+		ctx = ctx.
+			Str("dd.trace_id", traceID).
+			Str("dd.span_id", spanID)
+	}
+
+	logger := ctx.Logger()
 	logger.Log().Msg("")
 }
 

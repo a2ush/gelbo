@@ -254,7 +254,7 @@ func handlerWrapper(fn http.HandlerFunc) http.HandlerFunc {
 		httpLogger, _ := r.Context().Value("logger").(*HttpLogger)
 		httpLogger.init(r, reuse)
 		fn(w, r)
-		httpLogger.log()
+		httpLogger.log(r)
 	}
 }
 
